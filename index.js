@@ -83,32 +83,55 @@ const Cart = mongoose.model("Cart", cartSchema);
 
 //Order Schema xxxxxxxxxxxxxxxxxx------------------------xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
+
 const orderSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User"
+    ref: "User",
+    required: true
   },
+
   items: [
     {
       productId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Product"
       },
+
+      // 🔥 IMPORTANT SNAPSHOT DATA
+      name: String,
+      price: Number,
+      image: String,
+
       quantity: Number
     }
   ],
-  totalAmount: Number,
+
+  totalAmount: {
+    type: Number,
+    required: true
+  },
+
   status: {
     type: String,
+    enum: ["Pending", "Paid", "Shipped", "Delivered", "Cancelled"],
     default: "Pending"
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
+
+  // 🔥 PAYMENT
+  paymentId: String,
+  paymentMethod: {
+    type: String,
+    default: "COD" // or "Razorpay"
   }
+
+}, {
+  timestamps: true // 🔥 auto createdAt + updatedAt
 });
 
 const Order = mongoose.model("Order", orderSchema);
+
+module.exports = Order;
 
 // ================= ROUTES =================
 
@@ -447,6 +470,9 @@ app.post("/order", authMiddleware, async (req, res) => {
 
       return {
         productId: item.productId._id,
+          name: item.productId.name,
+  price: item.productId.price,
+  image: item.productId.image,
         quantity: item.quantity
       };
     });
@@ -544,23 +570,16 @@ app.post("/create-order", authMiddleware, async (req, res) => {
 
 app.get("/orders", authMiddleware, async (req, res) => {
   try {
+
+    const userId = req.user.userId;
+
     const orders = await Order.find({ userId: req.user.userId })
-      .populate("items.productId");
-
-
-          // 🔥 CLEAN DATA
-    const cleanOrders = orders.map(order => ({
-      _id: order._id,
-      totalAmount: order.totalAmount,
-      status: order.status,
-      createdAt: order.createdAt
-    }));
-
+      .sort({ createdAt: -1 });
 
 
     res.json({
       message: "Orders fetched ✅",
-      orders : cleanOrders
+      orders
     });
 
   } catch (error) {
