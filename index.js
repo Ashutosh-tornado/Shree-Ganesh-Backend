@@ -612,52 +612,52 @@ app.get("/orders", authMiddleware, async (req, res) => {
 
 // Payment API //
 
-app.post("/verify-payment", authMiddleware, async (req, res) => {
-  try {
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      orderId   // 🔥 apna DB orderId
-    } = req.body;
+// app.post("/verify-payment", authMiddleware, async (req, res) => {
+//   try {
+//     const {
+//       razorpay_order_id,
+//       razorpay_payment_id,
+//       razorpay_signature,
+//       orderId   // 🔥 apna DB orderId
+//     } = req.body;
 
-    const body = razorpay_order_id + "|" + razorpay_payment_id;
+//     const body = razorpay_order_id + "|" + razorpay_payment_id;
 
-    const expectedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(body.toString())
-      .digest("hex");
+//     const expectedSignature = crypto
+//       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+//       .update(body.toString())
+//       .digest("hex");
 
-    if (expectedSignature === razorpay_signature) {
+//     if (expectedSignature === razorpay_signature) {
 
-      // ✅ DB order update
-      const updatedOrder = await Order.findByIdAndUpdate(
-        orderId,
-        {
-          status: "Paid",
-          paymentId: razorpay_payment_id
-        },
-        { new: true }
-      );
+//       // ✅ DB order update
+//       const updatedOrder = await Order.findByIdAndUpdate(
+//         orderId,
+//         {
+//           status: "Paid",
+//           paymentId: razorpay_payment_id
+//         },
+//         { new: true }
+//       );
 
-      res.json({
-        message: "Payment verified ✅",
-        order: updatedOrder
-      });
+//       res.json({
+//         message: "Payment verified ✅",
+//         order: updatedOrder
+//       });
 
-    } else {
-      res.status(400).json({
-        message: "Invalid payment ❌"
-      });
-    }
+//     } else {
+//       res.status(400).json({
+//         message: "Invalid payment ❌"
+//       });
+//     }
 
-  } catch (error) {
-    res.status(500).json({
-      message: "Error ❌",
-      error: error.message
-    });
-  }
-});
+//   } catch (error) {
+//     res.status(500).json({
+//       message: "Error ❌",
+//       error: error.message
+//     });
+//   }
+// });
 
 // ================= COMMENTED ROUTES =================
 
